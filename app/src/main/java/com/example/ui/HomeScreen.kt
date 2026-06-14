@@ -687,7 +687,17 @@ fun PostCard(
             // Attached Media Preview (If media is tagged)
             if (post.mediaUrl.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(10.dp))
-                if (post.postType == "VIDEO_REEL") {
+                if (post.mediaUrl.startsWith("http")) {
+                    coil.compose.AsyncImage(
+                        model = post.mediaUrl,
+                        contentDescription = "Post attachment",
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    )
+                } else if (post.postType == "VIDEO_REEL") {
                     ReelsVideoPlayer(post = post, onLike = onLike)
                 } else {
                     Box(

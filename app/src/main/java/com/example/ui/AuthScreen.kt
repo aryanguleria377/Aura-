@@ -87,7 +87,6 @@ fun AuthScreen(
             coroutineScope.launch {
                 isLoading = true
                 loadingMessage = "Synchronizing secure identity coordinates..."
-                delay(1500)
                 viewModel.logInUser(email)
                 isLoading = false
             }
@@ -128,7 +127,6 @@ fun AuthScreen(
             coroutineScope.launch {
                 isLoading = true
                 loadingMessage = "Minting cryptographically verified session state..."
-                delay(1800)
                 viewModel.authenticateUser(
                     name = name,
                     handle = handle,
@@ -144,7 +142,6 @@ fun AuthScreen(
         coroutineScope.launch {
             isLoading = true
             loadingMessage = "Connecting Google Cryptographic handshakes..."
-            delay(1600)
             viewModel.logInGoogle()
             isLoading = false
         }

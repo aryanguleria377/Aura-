@@ -66,8 +66,8 @@ class SocialViewModel(application: Application) : AndroidViewModel(application) 
     val discoveryCategory = MutableStateFlow(DiscoveryCategory.FOR_YOU)
 
     // Skeleton loaders
-    val isFeedLoading = MutableStateFlow(true)
-    val isProfileLoading = MutableStateFlow(true)
+    val isFeedLoading = MutableStateFlow(false)
+    val isProfileLoading = MutableStateFlow(false)
     
     // Chat Room UI states
     val activeChatRoomId = MutableStateFlow<String?>(null)
@@ -168,7 +168,6 @@ class SocialViewModel(application: Application) : AndroidViewModel(application) 
         // Seed initial databases if first launch
         viewModelScope.launch(Dispatchers.IO) {
             repository.prePopulateIfEmpty()
-            delay(1200) // Beautiful initial fetching simulation
             isFeedLoading.value = false
             isProfileLoading.value = false
         }
@@ -228,58 +227,26 @@ class SocialViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun selectScreen(screen: ActiveScreen) {
-        viewModelScope.launch {
-            if (screen == ActiveScreen.FEED) {
-                isFeedLoading.value = true
-                activeScreen.value = screen
-                delay(700)
-                isFeedLoading.value = false
-            } else if (screen == ActiveScreen.PROFILE) {
-                isProfileLoading.value = true
-                activeScreen.value = screen
-                delay(700)
-                isProfileLoading.value = false
-            } else {
-                activeScreen.value = screen
-            }
-        }
+        activeScreen.value = screen
     }
 
     fun selectDiscoveryCategory(category: DiscoveryCategory) {
-        viewModelScope.launch {
-            isFeedLoading.value = true
-            discoveryCategory.value = category
-            delay(500)
-            isFeedLoading.value = false
-        }
+        discoveryCategory.value = category
     }
 
     fun selectFeedTab(tab: HomeFeedTab) {
-        viewModelScope.launch {
-            isFeedLoading.value = true
-            homeFeedTab.value = tab
-            // Clear quick hashtag and community filters when navigating tabs
-            activeHashtagFilter.value = null
-            activeCommunityFilter.value = null
-            delay(600)
-            isFeedLoading.value = false
-        }
+        homeFeedTab.value = tab
+        // Clear quick hashtag and community filters when navigating tabs
+        activeHashtagFilter.value = null
+        activeCommunityFilter.value = null
     }
 
     fun triggerManualFeedRefresh() {
-        viewModelScope.launch {
-            isFeedLoading.value = true
-            delay(1000)
-            isFeedLoading.value = false
-        }
+        // No-op for direct loading
     }
 
     fun triggerManualProfileRefresh() {
-        viewModelScope.launch {
-            isProfileLoading.value = true
-            delay(1000)
-            isProfileLoading.value = false
-        }
+        // No-op for direct loading
     }
 
     fun searchPosts(query: String) {

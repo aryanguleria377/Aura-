@@ -52,6 +52,7 @@ fun ProfileScreen(
     modifier: Modifier = Modifier
 ) {
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
+    val allPosts by viewModel.allPosts.collectAsStateWithLifecycle()
     val activeTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
     val userJwt by viewModel.currentSessionJwt.collectAsStateWithLifecycle()
     val isProfileLoading by viewModel.isProfileLoading.collectAsStateWithLifecycle()
@@ -309,6 +310,111 @@ fun ProfileScreen(
                 }
             }
         }
+
+        // 6. User's Posts Grid
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Previous Posts",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+
+                val userPosts = remember(allPosts, currentUser) {
+                    allPosts.filter { it.authorName == currentUser?.name }.let {
+                        if (it.isEmpty()) allPosts.take(9) else it
+                    }
+                }
+
+                if (userPosts.isEmpty()) {
+                    Text(
+                        text = "No posts yet.",
+                        fontSize = 13.sp,
+                        color = onSurfaceColor.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                } else {
+                    val columns = 3
+                    val rows = (userPosts.size + columns - 1) / columns
+                    
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        for (i in 0 until rows) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                for (j in 0 until columns) {
+                                    val index = i * columns + j
+                                    if (index < userPosts.size) {
+                                        val post = userPosts[index]
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .aspectRatio(1f)
+                                                .testTag("profile_post_grid_item_$index"),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = surfaceColor.copy(alpha = 0.5f)),
+                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize()
+                                                    .background(
+                                                        if (post.mediaUrl.isNotEmpty()) {
+                                                            Brush.sweepGradient(
+                                                                colors = listOf(
+                                                                    primaryColor.copy(alpha = 0.3f),
+                                                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                                                                    MaterialTheme.colorScheme.background
+                                                                )
+                                                            )
+                                                        } else {
+                                                            Brush.linearGradient(
+                                                                colors = listOf(primaryColor.copy(alpha = 0.1f), primaryColor.copy(alpha = 0.05f))
+                                                            )
+                                                        }
+                                                    )
+                                                    .padding(8.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (post.mediaUrl.startsWith("http")) {
+                                                    coil.compose.AsyncImage(
+                                                        model = post.mediaUrl,
+                                                        contentDescription = null,
+                                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                                        modifier = Modifier.fillMaxSize()
+                                                    )
+                                                } else if (post.mediaUrl.isNotEmpty()) {
+                                                    Icon(
+                                                        imageVector = if (post.postType == "VIDEO_REEL") Icons.Default.PlayArrow else Icons.Default.Image,
+                                                        contentDescription = null,
+                                                        tint = primaryColor,
+                                                        modifier = Modifier.size(32.dp)
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = post.textContent.take(20) + "...",
+                                                        fontSize = 10.sp,
+                                                        color = onSurfaceColor,
+                                                        maxLines = 3,
+                                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     }
 
@@ -348,16 +454,6 @@ fun ProfileScreen(
                     ) {
                         QrCodeCanvas()
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "IDENTITY CODE: ${currentUser!!.uniqueId.uppercase()}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        color = primaryColor
-                    )
                 }
             },
             confirmButton = {
@@ -555,7 +651,14 @@ fun AuraAvatar(
                 .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            if (avatarUrl.startsWith("cam_")) {
+            if (avatarUrl.startsWith("http")) {
+                coil.compose.AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = "$name Avatar",
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else if (avatarUrl.startsWith("cam_")) {
                 val colors = when (avatarUrl) {
                     "cam_solar_flare" -> listOf(Color(0xFFFF5722), Color(0xFFFFC107), Color(0xFFFFEB3B))
                     "cam_nebula_cloud" -> listOf(Color(0xFF9C27B0), Color(0xFFE91E63), Color(0xFF00BCD4))
